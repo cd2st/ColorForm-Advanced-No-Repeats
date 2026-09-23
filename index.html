@@ -331,7 +331,7 @@ async function shareResult(){
  const feedback=document.getElementById('shareStatus');
  const fallback=document.getElementById('shareFallback');
  feedback.textContent='';fallback.hidden=true;
- const resultToShare=dailyResultText+'\nPuzzle: https://bdunbar2016-star.github.io/ColorForm-Advanced-Daily-no-repeats/';
+ const resultToShare=dailyResultText+'\nPuzzle: https://cd2st.github.io/ColorForm-Advanced-no-repeats/';
  try{
    if(!navigator.clipboard)throw new Error('Clipboard unavailable');
    await navigator.clipboard.writeText(resultToShare);
