@@ -137,7 +137,7 @@ html,body{height:100%;overflow:hidden}body{height:100dvh;display:flex;align-item
   </div>
 </div>
 
-<div class="modal" id="modal"><div class="card"><h2 id="result"></h2><div class="small" id="resultText"></div><div class="small" id="elapsedTime"></div><div class="code" id="code"></div><button class="new" id="againBtn">PLAY AGAIN</button><button class="new" id="shareBtn">SHARE RESULT</button><div class="small" id="shareStatus" role="status"></div><pre id="shareFallback" hidden></pre></div></div>
+<div class="modal" id="modal"><div class="card"><h2 id="result"></h2><div class="small" id="resultText"></div><div class="small" id="elapsedTime"></div><div class="code" id="code"></div><button class="new" id="backToPuzzleBtn">BACK TO PUZZLE</button><button class="new" id="againBtn">PLAY AGAIN</button><button class="new" id="shareBtn">SHARE RESULT</button><div class="small" id="shareStatus" role="status"></div><pre id="shareFallback" hidden></pre></div></div>
 <script>
 const colors=[['blue','#2787ff'],['green','#28b66f'],['purple','#8d55d9'],['red','#ef4545'],['yellow','#f2c94c']];
 const shapes=['circle','diamond','square','star','triangle'];
@@ -252,10 +252,15 @@ const DAILY_LABEL='Advanced (No Repeats)';
 let dailyResultText='',practiceMode=false,dailySnapshot=null;
 const dailyHeading=document.querySelector('.title').innerHTML;
 const practiceHeading=dailyHeading.replace('ADVANCED','ADVANCED PRACTICE');
-const againButton=document.getElementById('againBtn'),shareButton=document.getElementById('shareBtn');
+const againButton=document.getElementById('againBtn'),shareButton=document.getElementById('shareBtn'),backToPuzzleButton=document.getElementById('backToPuzzleBtn');
+backToPuzzleButton.onclick=()=>document.getElementById('modal').classList.remove('show');
 const returnDailyButton=document.createElement('button');returnDailyButton.type='button';returnDailyButton.className='new';returnDailyButton.textContent='RETURN TO CHALLENGE RESULT';returnDailyButton.hidden=true;shareButton.insertAdjacentElement('afterend',returnDailyButton);
 const dailyDateFormatter=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'});
 let activeDailyDate='';
+function displayDailyDate(dateKey){const [year,month,day]=dateKey.split('-');return `${month}/${day}/${year.slice(-2)}`;}
+function dailyStorageKey(dateKey){return `colorform.daily.${DAILY_MODE}.${dateKey}`;}
+function loadDailySnapshot(dateKey){try{return JSON.parse(localStorage.getItem(dailyStorageKey(dateKey))||'null');}catch(error){return null;}}
+function saveDailySnapshot(dateKey,snapshot){try{localStorage.setItem(dailyStorageKey(dateKey),JSON.stringify(snapshot));}catch(error){}}
 function dailyDateKey(now=new Date()){
  const parts=Object.fromEntries(dailyDateFormatter.formatToParts(now).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));
  return `${parts.year}-${parts.month}-${parts.day}`;
@@ -296,7 +301,9 @@ function newGame(){
  resetPause();
  activeDailyDate=dailyDateKey();
  
- secret=dailySolution(activeDailyDate);guesses=[];current=Array(4).fill(null);selectedSlot=null;document.getElementById('modal').classList.remove('show');shareButton.hidden=false;returnDailyButton.hidden=true;againButton.textContent='PLAY RANDOM PUZZLE';render();status.textContent='Click a guess box, then choose a piece from the pool.';
+ secret=dailySolution(activeDailyDate);guesses=[];current=Array(4).fill(null);selectedSlot=null;document.getElementById('modal').classList.remove('show');shareButton.hidden=false;returnDailyButton.hidden=true;againButton.textContent='PLAY RANDOM PUZZLE';render();
+ const savedSnapshot=loadDailySnapshot(activeDailyDate);if(savedSnapshot){dailySnapshot=savedSnapshot;dailyResultText=savedSnapshot.resultText;returnToDailyResult();status.textContent='Today’s challenge is already complete in this browser. Review it or play a random puzzle.';return;}
+ status.textContent='Click a guess box, then choose a piece from the pool.';
 }
 function randomPracticeSolution(){
  if(DAILY_MODE==='noRepeat'){
@@ -321,8 +328,8 @@ function endGame(win){
  if(practiceMode){
    shareButton.hidden=true;returnDailyButton.hidden=false;againButton.textContent='PLAY ANOTHER RANDOM';
  }else{
-   dailyResultText=`ColorForm — ${DAILY_LABEL}\n${activeDailyDate} (Central time)\n${win?`Solved in ${guesses.length}/6 guesses`:'Not solved in 6 guesses'}\nTime: ${elapsed}`;
-   dailySnapshot={win,elapsed,resultText:dailyResultText,secret:[...secret],guesses:guesses.map(row=>({g:[...row.g],fb:row.fb}))};shareButton.hidden=false;returnDailyButton.hidden=true;againButton.textContent='PLAY RANDOM PUZZLE';
+   dailyResultText=`ColorForm — ${DAILY_LABEL}\n${displayDailyDate(activeDailyDate)}\n${win?`Solved in ${guesses.length}/6 guesses`:'Not solved in 6 guesses'}\nTime: ${elapsed}`;
+   dailySnapshot={win,elapsed,resultText:dailyResultText,secret:[...secret],guesses:guesses.map(row=>({g:[...row.g],fb:row.fb}))};saveDailySnapshot(activeDailyDate,dailySnapshot);shareButton.hidden=false;returnDailyButton.hidden=true;againButton.textContent='PLAY RANDOM PUZZLE';
  }
  document.getElementById('shareStatus').textContent='';
  document.getElementById('shareFallback').hidden=true;
@@ -333,7 +340,7 @@ async function shareResult(){
  const feedback=document.getElementById('shareStatus');
  const fallback=document.getElementById('shareFallback');
  feedback.textContent='';fallback.hidden=true;
- const resultToShare=dailyResultText+'\nPuzzle: https://cd2st.github.io/ColorForm-Advanced-no-repeats/';
+ const resultToShare=dailyResultText+'\nPlay ColorForm: https://cd2st.github.io/ColorForm/';
  try{
    if(!navigator.clipboard)throw new Error('Clipboard unavailable');
    await navigator.clipboard.writeText(resultToShare);
