@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark only">
-<title>ColorForm Advanced, shapes or colors may repeat</title>
+<title>ColorForm Advanced, NO repeating shapes or colors</title>
 <style>
 :root{
   --bg:#080d18; --panel:#111827; --panel2:#182235; --panel3:#0d1422;
@@ -12,7 +12,7 @@
   --accent2:#7c6cff; --black:#05070b; --gray:#ffffff;
 }
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(circle at top,#dce3e7 0,#9eabb4 48%,#66747e 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;min-height:100vh}
+body{margin:0;background:radial-gradient(circle at top,#eadfce 0,#bda98d 48%,#86745e 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;min-height:100vh}
 .app{width:min(1180px,100%);margin:auto;padding:24px}
 .topbar{display:flex;align-items:center;gap:14px;margin-bottom:18px}
 .round-head{width:82px;background:linear-gradient(145deg,#202d44,#151f32);color:#a9bbd4;border:1px solid #33445f;border-radius:14px;padding:13px 7px;text-align:center;font-size:12px;font-weight:900;letter-spacing:.12em;box-shadow:0 8px 28px #0005}
@@ -115,7 +115,7 @@ html,body{height:100%;overflow:hidden}body{height:100dvh;display:flex;align-item
 <div class="app">
   <div class="topbar">
     <div class="round-head">ROUND</div>
-    <div class="title">ColorForm: ADVANCED<br> (colors/shapes may repeat)</div>
+    <div class="title">ColorForm: ADVANCED<br> (colors/shapes may not repeat)</div>
     <div class="top-spacer">SHAPE &nbsp; | &nbsp; COLOR &nbsp; | &nbsp; COMBO</div>
   </div>
   <div class="main-layout">
@@ -138,7 +138,7 @@ html,body{height:100%;overflow:hidden}body{height:100dvh;display:flex;align-item
       <p><b>SHAPE:</b> compares only the shape.</p>
       <p><b>COLOR:</b> compares only the color.</p>
       <p><b>COMBO:</b> compares the complete color + shape combination.</p>
-      <p class="version-rule">You have <b>6 rounds</b> to crack the 4-piece code. The hidden code may repeat shapes, colors, both, or neither.</p>
+      <p class="version-rule">You have <b>6 rounds</b> to crack the 4-piece code. The hidden code never repeats a shape or a color.</p>
     </aside>
   </div>
   </div>
@@ -257,8 +257,9 @@ function render(){
 function recordUndo(){undoStack.push({current:[...current],selectedSlot});if(undoStack.length>50)undoStack.shift();redoStack=[];}
 function undoGuess(){const previous=undoStack.pop();if(!previous)return;redoStack.push({current:[...current],selectedSlot});if(redoStack.length>50)redoStack.shift();current=[...previous.current];selectedSlot=previous.selectedSlot;render();status.textContent=undoStack.length?'Last change undone. You can undo again.':'Last change undone.';}
 function redoGuess(){const next=redoStack.pop();if(!next)return;undoStack.push({current:[...current],selectedSlot});if(undoStack.length>50)undoStack.shift();current=[...next.current];selectedSlot=next.selectedSlot;render();status.textContent=redoStack.length?'Change restored. You can redo again.':'Change restored.';}
-const DAILY_MODE='mayRepeat';
-const DAILY_LABEL='Advanced (May Repeat)';
+function shuffled(items){const copy=[...items];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}return copy;}
+const DAILY_MODE='noRepeat';
+const DAILY_LABEL='Advanced (No Repeats)';
 let dailyResultText='',practiceMode=false,dailySnapshot=null;
 const dailyHeading=document.querySelector('.title').innerHTML;
 const practiceHeading=dailyHeading.replace('ADVANCED','ADVANCED PRACTICE');
@@ -324,6 +325,7 @@ function newGame(){
  startedAt=Date.now();
  resetPause();
  activeDailyDate=dailyDateKey();
+ 
  secret=dailySolution(activeDailyDate);guesses=[];current=Array(4).fill(null);selectedSlot=null;undoStack=[];redoStack=[];document.getElementById('modal').classList.remove('show');shareButton.hidden=false;returnDailyButton.hidden=true;againButton.textContent='PLAY RANDOM PUZZLE';render();
  const savedSnapshot=loadDailySnapshot(activeDailyDate);if(savedSnapshot){clearProgress();dailySnapshot=savedSnapshot;dailyResultText=savedSnapshot.resultText;returnToDailyResult();status.textContent='Today’s challenge is already complete in this browser. Review it or play a random puzzle.';return;}
  if(restoreProgress())return;
